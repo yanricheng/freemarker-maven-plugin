@@ -1,3 +1,4 @@
 target
 .idea
 freemarker-maven-plugin.iml
+.class
