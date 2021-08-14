@@ -2,9 +2,9 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.oath.freemarker</groupId>
+  <groupId>com.oath.freemarker.yrc</groupId>
   <artifactId>freemarker-maven-plugin</artifactId>
-  <version>20210522-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Freemarker Maven Plugin</name>
@@ -158,14 +158,21 @@
               <goal>check</goal>
             </goals>
             <configuration>
-              <targetPercentage>${clover-target-percentage}</targetPercentage>
-              <generateHtml>true</generateHtml>
-              <generateXml>true</generateXml>
-              <jdk>${target_jdk_version}</jdk>
+                <targetPercentage>${clover-target-percentage}</targetPercentage>
+                <generateHtml>true</generateHtml>
+                <generateXml>true</generateXml>
+                <jdk>${target_jdk_version}</jdk>
             </configuration>
           </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>xinxi-snapshot</id>
+            <url>http://maven.dc.servyou-it.com/nexus/content/repositories/xinxi-snapshot</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
