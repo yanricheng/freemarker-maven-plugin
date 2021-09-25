@@ -3,39 +3,30 @@
 
 package com.oath.maven.plugin.freemarker;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
 public class JsonPropertiesProvider implements OutputGeneratorPropertiesProvider {
-    private final Gson gson;
-    private final Type stringObjectMap;
     private final File dataDir;
     private final File templateDir;
     private final File outputDir;
     private File basedir;
+    private Map<String, Object> baseModole;
 
     private JsonPropertiesProvider(File dataDir, File templateDir, File outputDir) {
         this.dataDir = dataDir;
         this.templateDir = templateDir;
         this.outputDir = outputDir;
-        gson = new GsonBuilder().setLenient().create();
-        stringObjectMap = new TypeToken<Map<String, Object>>() {
-        }.getType();
     }
 
     public static JsonPropertiesProvider create(File dataDir, File templateDir, File outputDir) {
         return new JsonPropertiesProvider(dataDir, templateDir, outputDir);
+    }
+
+    public void setBaseModole(Map<String, Object> baseModole) {
+        this.baseModole = baseModole;
     }
 
     public void setBasedir(File basedir) {
@@ -45,13 +36,16 @@ public class JsonPropertiesProvider implements OutputGeneratorPropertiesProvider
     @Override
     public void providePropertiesFromFile(Path path, OutputGenerator.OutputGeneratorBuilder builder) {
         File jsonDataFile = path.toFile();
-        Map<String, Object> data = parseJson(jsonDataFile);
+        Map<String, Object> data = JsonUtil.parseJson(jsonDataFile);
 
         Object obj = data.get("dataModel");
         if (obj != null) {
-            builder.addDataModel((Map<String, Object>) obj);
+            Map<String, Object> dataModel = new HashMap<>();
+            dataModel.putAll(baseModole);
+            dataModel.putAll((Map<String, Object>) obj);
+            builder.addDataModel(dataModel);
         } else {
-            builder.addDataModel(new HashMap<String, Object>());
+            builder.addDataModel(baseModole);
         }
 
         obj = data.get("templateName");
@@ -85,16 +79,8 @@ public class JsonPropertiesProvider implements OutputGeneratorPropertiesProvider
             outputPath = outputDir.toPath();
         }
         Path resolved = outputPath.resolve(outputFileName);
-
-
         builder.addOutputLocation(resolved);
     }
 
-    private Map<String, Object> parseJson(File jsonDataFile) {
-        try (JsonReader reader = new JsonReader(new InputStreamReader(new FileInputStream(jsonDataFile), StandardCharsets.UTF_8))) {
-            return gson.fromJson(reader, stringObjectMap);
-        } catch (Throwable t) {
-            throw new RuntimeException("Could not parse json data file: " + jsonDataFile, t);
-        }
-    }
+
 }

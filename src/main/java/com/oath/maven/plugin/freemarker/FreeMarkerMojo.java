@@ -29,30 +29,20 @@ public class FreeMarkerMojo extends AbstractMojo {
      */
     @Parameter
     private String freeMarkerVersion;
-
     @Parameter(defaultValue = "src/main/freemarker")
     private File sourceDirectory;
-
-
-    @Parameter(defaultValue = "src/main/freemarker/baseConfigJsonFile.json")
-    private File baseConfigJsonFile;
-
+    @Parameter(defaultValue = "src/main/freemarker/baseModole.json")
+    private File baseModoleJson;
     @Parameter(defaultValue = "src/main/freemarker/template")
     private File templateDirectory;
-
     @Parameter(defaultValue = "src/main/freemarker/generator")
     private File generatorDirectory;
-
     @Parameter(defaultValue = "target/generated-sources/freemarker")
     private File outputDirectory;
-
     @Parameter(defaultValue = "${session}", readonly = true)
     private MavenSession session;
-
     @Parameter(defaultValue = "${mojoExecution}", readonly = true)
     private MojoExecution mojo;
-
-    public Map map = new HashMap();
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -72,6 +62,14 @@ public class FreeMarkerMojo extends AbstractMojo {
         config.setDefaultEncoding("UTF-8");
 
         File basedir = session.getCurrentProject().getBasedir();
+
+        Map<String, Object> baseModle = null;
+        if (baseModoleJson != null && baseModoleJson.exists() && baseModoleJson.isFile()) {
+            baseModle = JsonUtil.parseJson(baseModoleJson);
+        }
+        if (baseModle == null) {
+            baseModle = new HashMap<>();
+        }
 
         if (!templateDirectory.isDirectory()) {
             throw new MojoExecutionException("Required directory does not exist: " + templateDirectory);
@@ -108,6 +106,7 @@ public class FreeMarkerMojo extends AbstractMojo {
 
         JsonPropertiesProvider jsonPropertiesProvider = JsonPropertiesProvider.create(generatorDirectory, templateDirectory, outputDirectory);
         jsonPropertiesProvider.setBasedir(basedir);
+        jsonPropertiesProvider.setBaseModole(baseModle);
 
         Map<String, OutputGeneratorPropertiesProvider> extensionToBuilders = new HashMap<>(1);
         extensionToBuilders.put(".json", jsonPropertiesProvider);
