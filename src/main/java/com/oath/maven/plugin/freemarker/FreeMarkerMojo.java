@@ -33,6 +33,10 @@ public class FreeMarkerMojo extends AbstractMojo {
     @Parameter(defaultValue = "src/main/freemarker")
     private File sourceDirectory;
 
+
+    @Parameter(defaultValue = "src/main/freemarker/baseConfigJsonFile.json")
+    private File baseConfigJsonFile;
+
     @Parameter(defaultValue = "src/main/freemarker/template")
     private File templateDirectory;
 
@@ -47,6 +51,8 @@ public class FreeMarkerMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${mojoExecution}", readonly = true)
     private MojoExecution mojo;
+
+    public Map map = new HashMap();
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -63,8 +69,9 @@ public class FreeMarkerMojo extends AbstractMojo {
         }
 
         Configuration config = FactoryUtil.createConfiguration(freeMarkerVersion);
-
         config.setDefaultEncoding("UTF-8");
+
+        File basedir = session.getCurrentProject().getBasedir();
 
         if (!templateDirectory.isDirectory()) {
             throw new MojoExecutionException("Required directory does not exist: " + templateDirectory);
@@ -99,8 +106,11 @@ public class FreeMarkerMojo extends AbstractMojo {
             session.getCurrentProject().addTestCompileSourceRoot(outputDirectory.toString());
         }
 
+        JsonPropertiesProvider jsonPropertiesProvider = JsonPropertiesProvider.create(generatorDirectory, templateDirectory, outputDirectory);
+        jsonPropertiesProvider.setBasedir(basedir);
+
         Map<String, OutputGeneratorPropertiesProvider> extensionToBuilders = new HashMap<>(1);
-        extensionToBuilders.put(".json", JsonPropertiesProvider.create(generatorDirectory, templateDirectory, outputDirectory));
+        extensionToBuilders.put(".json", jsonPropertiesProvider);
 
         GeneratingFileVisitor fileVisitor = GeneratingFileVisitor.create(config, session, extensionToBuilders);
         try {
