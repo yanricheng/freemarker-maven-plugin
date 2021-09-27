@@ -80,6 +80,7 @@ public class JsonPropertiesProvider implements OutputGeneratorPropertiesProvider
         }
         Path resolved = outputPath.resolve(outputFileName);
         builder.addOutputLocation(resolved);
+
     }
 
 

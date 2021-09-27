@@ -98,25 +98,27 @@ public class FreeMarkerMojo extends AbstractMojo {
             }
         }
 
-        if ("generate-sources".equals(mojo.getLifecyclePhase())) {
-            session.getCurrentProject().addCompileSourceRoot(outputDirectory.toString());
-        } else if ("generate-test-sources".equals(mojo.getLifecyclePhase())) {
-            session.getCurrentProject().addTestCompileSourceRoot(outputDirectory.toString());
-        }
-
-        JsonPropertiesProvider jsonPropertiesProvider = JsonPropertiesProvider.create(generatorDirectory, templateDirectory, outputDirectory);
-        jsonPropertiesProvider.setBasedir(basedir);
-        jsonPropertiesProvider.setBaseModole(baseModle);
-
-        Map<String, OutputGeneratorPropertiesProvider> extensionToBuilders = new HashMap<>(1);
-        extensionToBuilders.put(".json", jsonPropertiesProvider);
-
-        GeneratingFileVisitor fileVisitor = GeneratingFileVisitor.create(config, session, extensionToBuilders);
         try {
+
+            if ("generate-sources".equals(mojo.getLifecyclePhase())) {
+                session.getCurrentProject().addCompileSourceRoot(outputDirectory.toString());
+            } else if ("generate-test-sources".equals(mojo.getLifecyclePhase())) {
+                session.getCurrentProject().addTestCompileSourceRoot(outputDirectory.toString());
+            }
+
+            JsonPropertiesProvider jsonPropertiesProvider = JsonPropertiesProvider.create(generatorDirectory, templateDirectory, outputDirectory);
+            jsonPropertiesProvider.setBasedir(basedir);
+            jsonPropertiesProvider.setBaseModole(baseModle);
+
+            Map<String, OutputGeneratorPropertiesProvider> extensionToBuilders = new HashMap<>(1);
+            extensionToBuilders.put(".json", jsonPropertiesProvider);
+
+            GeneratingFileVisitor fileVisitor = GeneratingFileVisitor.create(config, session, extensionToBuilders);
+
             Files.walkFileTree(generatorDirectory.toPath(), fileVisitor);
         } catch (Throwable t) {
-            getLog().error("Failed to process files in generator dir: " + generatorDirectory, t);
-            throw new MojoExecutionException("Failed to process files in generator dir: " + generatorDirectory);
+            getLog().error(String.format("Failed to process files in generator dir: %s,msg:%s", generatorDirectory, t.getMessage()), t);
+            throw new MojoExecutionException("Failed to process files in generator dir: " + generatorDirectory, t);
         }
     }
 }

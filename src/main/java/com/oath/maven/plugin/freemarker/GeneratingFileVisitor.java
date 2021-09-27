@@ -3,16 +3,14 @@
 
 package com.oath.maven.plugin.freemarker;
 
+import freemarker.template.Configuration;
+import org.apache.maven.execution.MavenSession;
+
 import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
-
-import org.apache.maven.execution.MavenSession;
-
-import freemarker.template.Configuration;
-import org.apache.maven.project.MavenProject;
 
 /**
  * FileVisitor designed to process json data files. The json file parsed into
@@ -46,11 +44,11 @@ public class GeneratingFileVisitor extends SimpleFileVisitor<Path> {
   public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
     if (attrs.isRegularFile()) {
       OutputGenerator.OutputGeneratorBuilder builder = OutputGenerator.builder()
-          .addGeneratorLocation(path)
-          .addPomLastModifiedTimestamp(pomLastModifiedTimestamp);
+              .addGeneratorLocation(path)
+              .addPomLastModifiedTimestamp(pomLastModifiedTimestamp);
       String fileName = path.getFileName().toString();
-      String extenstion = fileName.substring(fileName.lastIndexOf('.'));
-      OutputGeneratorPropertiesProvider pathProcessor = extensionToBuilder.get(extenstion);
+      String extension = fileName.substring(fileName.lastIndexOf('.'));
+      OutputGeneratorPropertiesProvider pathProcessor = extensionToBuilder.get(extension);
       if (pathProcessor == null) {
         throw new RuntimeException("Unknown file extension: " + path);
       }
