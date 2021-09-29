@@ -28,4 +28,12 @@ public class JsonUtil {
             throw new RuntimeException("Could not parse json data file: " + jsonDataFile, t);
         }
     }
+
+    public static <T> T fromJson(String json, Type typeOfT) {
+        return gson.fromJson(json, typeOfT);
+    }
+
+    public static String toJson(Object o) {
+        return gson.toJson(o);
+    }
 }

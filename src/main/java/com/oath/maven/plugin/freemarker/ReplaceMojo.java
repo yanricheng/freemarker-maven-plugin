@@ -3,6 +3,12 @@
 
 package com.oath.maven.plugin.freemarker;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.oath.maven.plugin.freemarker.replace.ReplaceDes;
+import com.oath.maven.plugin.freemarker.replace.Replacement;
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
@@ -14,59 +20,28 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 @Mojo(name = "replace", defaultPhase = LifecyclePhase.PROCESS_RESOURCES)
 public class ReplaceMojo extends AbstractMojo {
 
-    /**
-     * FreeMarker version string used to build FreeMarker Configuration instance.
-     */
-    @Parameter
-    private String freeMarkerVersion;
-
-    @Parameter(property = "sourceDirectory", defaultValue = "src/main/java/cn/com/servyou/finance/ecs/facade/form/convert")
-    private File sourceDirectory;
-
-    @Parameter(property = "replaceMapStrig", defaultValue = "")
-    private String replaceMapStrig;
-
-    @Parameter(property = "subfix", defaultValue = ".java")
-    private String subfix;
-
-
+    @Parameter(property = "replaceJsonConfig")
+    protected File replaceJsonConfig;
+    @Parameter(defaultValue = "${project.baseDir}")
+    protected File projectDirectory;
+    @Parameter(property = "suffix", defaultValue = ".java")
+    private String suffix;
     @Parameter(defaultValue = "${session}", readonly = true)
     private MavenSession session;
-
     @Parameter(defaultValue = "${mojoExecution}", readonly = true)
     private MojoExecution mojo;
-
-
-    public void write(File file, OutputStream os) throws IOException {
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(file);
-            byte[] b = new byte[1024];
-            int length;
-            while ((length = fis.read(b)) > 0) {
-                os.write(b, 0, length);
-            }
-        } finally {
-            if (os != null) {
-                os.close();
-
-            }
-            if (fis != null) {
-                fis.close();
-            }
-        }
-    }
 
     public String read(File file) throws IOException {
         if (file.isFile()) {
@@ -98,36 +73,40 @@ public class ReplaceMojo extends AbstractMojo {
 //            throw new MojoExecutionException("freeMarkerVersion is required");
 //        }
 
-        if (!sourceDirectory.exists()) {
-            getLog().info(String.format("===> replace sourceDirectory:not exists", sourceDirectory.getAbsolutePath()));
+
+        if (!replaceJsonConfig.exists()) {
+            getLog().info(String.format("===> replace sourceDirectory:not exists", replaceJsonConfig.getAbsolutePath()));
             return;
         }
 
+        Gson gson = new GsonBuilder().setLenient().create();
 
-        if (!sourceDirectory.isDirectory()) {
-            sourceDirectory.mkdirs();
-            if (!sourceDirectory.isDirectory()) {
-                throw new MojoExecutionException("Required directory does not exist: " + sourceDirectory);
-            }
+        String json = null;
+        try {
+            json = FileUtils.readFileToString(replaceJsonConfig, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            getLog().error(e);
         }
-        getLog().info(String.format("===> replace sourceDirectory:%s", sourceDirectory.getAbsolutePath()));
 
-        File[] filelist = sourceDirectory.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.endsWith(subfix);
-            }
-        });
+        List<ReplaceDes> replaceDesList = JsonUtil.fromJson(json, new TypeToken<Map<String, Object>>() {
+        }.getType());
 
-        if (replaceMapStrig != null && !replaceMapStrig.isEmpty()) {
-            String[] keyVals = replaceMapStrig.split(",");
+        for (ReplaceDes r : replaceDesList) {
+            File sourceDirectory = new File(projectDirectory, r.getSourceFile());
+            getLog().info(String.format("===> replace sourceDirectory:%s", sourceDirectory.getAbsolutePath()));
+
+            File[] filelist = sourceDirectory.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(suffix);
+                }
+            });
+
             for (File file : filelist) {
                 try {
                     String src = read(file);
-
-                    for (String keyVal : keyVals) {
-                        String[] kv = keyVal.split("\\|");
-                        src = src.replaceAll(kv[0], kv[1]);
+                    for (Replacement replacement : r.getReplacemens()) {
+                        src = src.replaceAll(replacement.getSource(), replacement.getTarget());
                     }
 
                     String path = file.getAbsolutePath();
@@ -151,6 +130,4 @@ public class ReplaceMojo extends AbstractMojo {
             }
         }
     }
-
-
 }

@@ -30,6 +30,15 @@ public class MakeDirMojo extends AbstractMojo {
     @Parameter
     private String freeMarkerVersion;
 
+    /**
+     * The location of the war file.
+     *
+     * @parameter expression="${project.build.directory}/${project.build.finalName}"
+     * @required
+     */
+    @Parameter(defaultValue = "${project.build.directory}/${project.build.finalName}", required = true)
+    private File webApp;
+
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
