@@ -3,8 +3,6 @@
 
 package com.oath.maven.plugin.freemarker;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.oath.maven.plugin.freemarker.replace.ReplaceDes;
 import com.oath.maven.plugin.freemarker.replace.Replacement;
@@ -27,7 +25,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 @Mojo(name = "replace", defaultPhase = LifecyclePhase.PROCESS_RESOURCES)
 public class ReplaceMojo extends AbstractMojo {
@@ -68,18 +65,14 @@ public class ReplaceMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-
-//        if (freeMarkerVersion == null || freeMarkerVersion.length() == 0) {
-//            throw new MojoExecutionException("freeMarkerVersion is required");
-//        }
-
-
         if (!replaceJsonConfig.exists()) {
             getLog().info(String.format("===> replace sourceDirectory:not exists", replaceJsonConfig.getAbsolutePath()));
             return;
         }
 
-        Gson gson = new GsonBuilder().setLenient().create();
+        if (projectDirectory == null) {
+            projectDirectory = session.getCurrentProject().getBasedir();
+        }
 
         String json = null;
         try {
@@ -88,7 +81,7 @@ public class ReplaceMojo extends AbstractMojo {
             getLog().error(e);
         }
 
-        List<ReplaceDes> replaceDesList = JsonUtil.fromJson(json, new TypeToken<Map<String, Object>>() {
+        List<ReplaceDes> replaceDesList = JsonUtil.fromJson(json, new TypeToken<List<ReplaceDes>>() {
         }.getType());
 
         for (ReplaceDes r : replaceDesList) {
@@ -125,7 +118,7 @@ public class ReplaceMojo extends AbstractMojo {
                     out.flush();
                     out.close();
                 } catch (Exception e) {
-                    getLog().error(e);
+                    getLog().error(e.getMessage(), e);
                 }
             }
         }

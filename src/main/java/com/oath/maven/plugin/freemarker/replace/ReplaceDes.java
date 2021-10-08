@@ -18,6 +18,17 @@ public class ReplaceDes {
         this.replacemens = replacemens;
     }
 
+    public static void main(String[] args) {
+        ReplaceDes r = new ReplaceDes("/src/main", new ArrayList<>());
+        Replacement r1 = new Replacement("11", "aa");
+        Replacement r2 = new Replacement("22", "bb");
+        r.getReplacemens().add(r1);
+        r.getReplacemens().add(r2);
+        List<ReplaceDes> list = new ArrayList<>();
+        list.add(r);
+        System.out.println(JsonUtil.toJson(list));
+    }
+
     public String getSourceFile() {
         return sourceFile;
     }
@@ -32,14 +43,5 @@ public class ReplaceDes {
 
     public void setReplacemens(List<Replacement> replacemens) {
         this.replacemens = replacemens;
-    }
-
-    public static void main(String[] args) {
-        ReplaceDes r = new ReplaceDes("/src/main", new ArrayList<>());
-        Replacement r1 = new Replacement("11", "aa");
-        Replacement r2 = new Replacement("22", "bb");
-        r.getReplacemens().add(r1);
-        r.getReplacemens().add(r2);
-        System.out.println(JsonUtil.toJson(r));
     }
 }

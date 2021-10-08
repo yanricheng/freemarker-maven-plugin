@@ -24,6 +24,41 @@ import java.util.Properties;
 @Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class FreeMarkerMojo extends AbstractMojo {
 
+    @Parameter(defaultValue = "${project.baseDir}")
+    private File basedir;
+
+    @Parameter(defaultValue = "${project.build.sourceDirectory}",
+            required = true,
+            readonly = true)
+    private File projectSourceDirectory;
+
+    @Parameter(defaultValue = "${project.build.testSourceDirectory}",
+            required = true,
+            readonly = true)
+    private File testSourceDirectory;
+
+
+    @Parameter(
+            defaultValue = "${project.build.directory}",
+            required = true,
+            readonly = true
+    )
+    private File targetDirectory;
+
+    @Parameter(
+            defaultValue = "${project.build.outputDirectory}",
+            required = true,
+            readonly = true
+    )
+    private File classesDirectory;
+
+//    @Parameter(
+//            defaultValue = "${project.testOutputDirectory}",
+//            required = true,
+//            readonly = true
+//    )
+//    private File testOutputDirectory;
+
     /**
      * FreeMarker version string used to build FreeMarker Configuration instance.
      */
@@ -44,9 +79,9 @@ public class FreeMarkerMojo extends AbstractMojo {
     @Parameter(defaultValue = "${mojoExecution}", readonly = true)
     private MojoExecution mojo;
 
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-
         if (freeMarkerVersion == null || freeMarkerVersion.length() == 0) {
             throw new MojoExecutionException("freeMarkerVersion is required");
         }
@@ -61,8 +96,6 @@ public class FreeMarkerMojo extends AbstractMojo {
         Configuration config = FactoryUtil.createConfiguration(freeMarkerVersion);
         config.setDefaultEncoding("UTF-8");
 
-        File basedir = session.getCurrentProject().getBasedir();
-
         Map<String, Object> baseModle = null;
         if (baseModoleJson != null && baseModoleJson.exists() && baseModoleJson.isFile()) {
             baseModle = JsonUtil.parseJson(baseModoleJson);
@@ -70,6 +103,19 @@ public class FreeMarkerMojo extends AbstractMojo {
         if (baseModle == null) {
             baseModle = new HashMap<>();
         }
+
+        if (basedir == null) {
+            basedir = session.getCurrentProject().getBasedir();
+        }
+        baseModle.put("projectBaseDir", basedir);
+        File projectresourceDirectory = new File(basedir, "src/main/resources");
+        if (!projectresourceDirectory.exists()) {
+            projectresourceDirectory.mkdirs();
+        }
+        baseModle.put("projectresourceDirectory", projectresourceDirectory);
+        baseModle.put("projectSourceDirectory", projectSourceDirectory);
+        baseModle.put("projectBuildDirectory", targetDirectory);
+        baseModle.put("projectBuildOutputDirectory", classesDirectory);
 
         if (!templateDirectory.isDirectory()) {
             throw new MojoExecutionException("Required directory does not exist: " + templateDirectory);
